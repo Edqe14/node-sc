@@ -30,7 +30,7 @@ module.exports = class SC extends EventEmitter {
     }, config);
 
     this.url = `${this.config.proto}://${this.config.host}:${this.config.port}`;
-    this.wsUrl = `${this.config.proto === 'http' ? 'ws' : 'wss'}://${this.config.host}:${this.config.port}`
+    this.wsUrl = `${this.config.proto === 'http' ? 'ws' : 'wss'}://${this.config.host}:${this.config.port}`;
     this.ws = {};
 
     if (this.config.listeners.tokens) {
@@ -51,7 +51,7 @@ module.exports = class SC extends EventEmitter {
       this._listenHandler(mapDataWs);
       this.ws.mapData = mapDataWs;
     }
-    
+
     if (this.config.listeners.liveData) {
       this.live = {};
 
@@ -65,15 +65,18 @@ module.exports = class SC extends EventEmitter {
   /**
    * WebSocket listener handler
    * @private
-   * @param {WebSocket} ws 
+   * @param {WebSocket} ws
    */
-  _listenHandler(ws) {
+  _listenHandler (ws) {
     ws.on('open', () => {
       this.emit('ready', ws.type);
       if (ws.type === 'token') ws.send(JSON.stringify(this.watchedTokens));
     });
 
     ws.on('message', (data) => {
+      data = data.trim();
+      if (data.length === 0) return;
+
       data = JSON.parse(data);
       if (ws.type === 'token') this.tokens = data;
       else if (ws.type === 'mapdata') this.data = data;
@@ -93,7 +96,7 @@ module.exports = class SC extends EventEmitter {
    * Get JSON data of a map
    */
   getJson () {
-    return new Promise ((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       get(`${this.url}/json`)
         .then(res => resolve(res.data))
         .catch(err => reject(err));
@@ -104,7 +107,7 @@ module.exports = class SC extends EventEmitter {
    * Get map background image data
    */
   getBackground () {
-    return new Promise ((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       get(`${this.url}/backgroundImage`)
         .then(res => resolve(res.data))
         .catch(err => reject(err));
@@ -115,7 +118,7 @@ module.exports = class SC extends EventEmitter {
    * Get web overlay list
    */
   getOverlayList () {
-    return new Promise ((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       get(`${this.url}/overlayList`)
         .then(res => resolve(res.data))
         .catch(err => reject(err));
@@ -126,7 +129,7 @@ module.exports = class SC extends EventEmitter {
    * Get SC settings
    */
   getSettings () {
-    return new Promise ((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       get(`${this.url}/settings`)
         .then(res => resolve(res.data))
         .catch(err => reject(err));
@@ -202,7 +205,7 @@ module.exports = class SC extends EventEmitter {
       Watching: 8,
       Editing: 16,
       ResultsScreen: 32
-    }
+    };
   }
 
   get rawOsuStatus () {
@@ -226,7 +229,7 @@ module.exports = class SC extends EventEmitter {
       RankingTeam: 18,
       ProcessingBeatmaps: 19,
       Tourney: 22
-    }
+    };
   }
 
   get osuGrade () {
@@ -243,4 +246,4 @@ module.exports = class SC extends EventEmitter {
       9: ''
     };
   }
-}
+};
