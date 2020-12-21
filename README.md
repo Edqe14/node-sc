@@ -1,4 +1,4 @@
-# StreamCompanion
+# StreamCompanion (node-sc)
 
 Node implementation of StreamCompanion using its built-in WebSocket endpoints.
 
