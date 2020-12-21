@@ -1,0 +1,28 @@
+{
+  "name": "streamcompanion",
+  "version": "1.0.0",
+  "description": "Node StreamCompanion implementation",
+  "main": "src/sc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Edqe14/node-sc.git"
+  },
+  "keywords": [
+    "osu!",
+    "streamcompanion",
+    "stream companion"
+  ],
+  "author": "Edqe_",
+  "license": "SEE LICENSE IN LICENSE",
+  "bugs": {
+    "url": "https://github.com/Edqe14/node-sc/issues"
+  },
+  "homepage": "https://github.com/Edqe14/node-sc#readme",
+  "dependencies": {
+    "axios": "^0.21.0",
+    "ws": "^7.4.1"
+  }
+}
