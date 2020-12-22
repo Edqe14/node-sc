@@ -11,6 +11,10 @@ Node implementation of StreamCompanion using its built-in WebSocket endpoints.
  1. Can run [StreamCompanion](https://github.com/Piotrekol/StreamCompanion)
  2. Node **12+**
 
+### Important
+
+If you can't connect to Stream Companion, go to `Settings/Web Overlay` and click `Enable remote access`
+
 ## Documentation
 
 ```js
