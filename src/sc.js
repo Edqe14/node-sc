@@ -10,10 +10,14 @@ module.exports = class SC extends EventEmitter {
    * @param {Number} config.port SC Port number
    * @param {'http'|'https'} config.proto SC HTTP protocol
    * @param {string[]} config.watchTokens Tokens to watch/get
+   * @param {boolean} [config.initializeAutomatically=true] Automatically create and connect to WebSockets
    * @param {Object} config.listeners
    * @param {boolean} [config.listeners.tokens=true] Toggle token websocket
    * @param {boolean} [config.listeners.mapData=true] Toggle map data websocket
    * @param {boolean} [config.listeners.liveData=false] Toggle live data websocket
+   * @param {Object} config.ws
+   * @param {Number} config.ws.reconnectInterval Reconnect interval
+   * @param {Number} config.ws.maxTries Max tries to reconnect before emitting an error
    */
   constructor (config) {
     super();
@@ -22,44 +26,64 @@ module.exports = class SC extends EventEmitter {
       port: 20727,
       proto: 'http',
       watchTokens: [],
+      initializeAutomatically: true,
       listeners: {
         tokens: true,
         mapData: true,
         liveData: false
+      },
+      ws: {
+        reconnectInterval: 3000,
+        maxTries: 5
       }
     }, config);
 
     this.url = `${this.config.proto}://${this.config.host}:${this.config.port}`;
     this.wsUrl = `${this.config.proto === 'http' ? 'ws' : 'wss'}://${this.config.host}:${this.config.port}`;
     this.ws = {};
+    this.initialized = false;
+    if (this.config.initializeAutomatically) this.initialize();
+  }
 
+  /**
+   * Initialize/Start creating WebSocket clients
+   * @method
+   */
+  initialize () {
+    this.initialized = true;
     if (this.config.listeners.tokens) {
       this.tokens = {};
       this.watchedTokens = this.config.watchTokens;
-
-      const tokenWs = new WebSocket(`${this.wsUrl}/tokens`);
-      tokenWs.type = 'token';
-      this._listenHandler(tokenWs);
-      this.ws.token = tokenWs;
+      if (this.ws.token instanceof WebSocket) this.ws.token.removeAllListeners();
+      this.ws.token = this._createWS(`${this.wsUrl}/tokens`, 'token');
     }
 
     if (this.config.listeners.mapData) {
       this.data = {};
-
-      const mapDataWs = new WebSocket(`${this.wsUrl}/mapData`);
-      mapDataWs.type = 'mapdata';
-      this._listenHandler(mapDataWs);
-      this.ws.mapData = mapDataWs;
+      if (this.ws.mapData instanceof WebSocket) this.ws.mapData.removeAllListeners();
+      this.ws.mapData = this._createWS(`${this.wsUrl}/mapData`, 'mapData');
     }
 
     if (this.config.listeners.liveData) {
       this.live = {};
-
-      const liveDataWs = new WebSocket(`${this.wsUrl}/liveData`);
-      liveDataWs.type = 'livedata';
-      this._listenHandler(liveDataWs);
-      this.ws.liveData = liveDataWs;
+      if (this.ws.liveData instanceof WebSocket) this.ws.liveData.removeAllListeners();
+      this.ws.liveData = this._createWS(`${this.wsUrl}/liveData`, 'liveData');
     }
+  }
+
+  /**
+   * Create new WebSocket client
+   * @private
+   * @param {string} url WebSocket URI
+   * @param {string} type WebSocket Type
+   * @param {number=0} reconnectTries Reconnect tries count
+   */
+  _createWS (url, type, reconnectTries = 0) {
+    const ws = new WebSocket(url);
+    ws.type = type;
+    ws.reconnectTries = reconnectTries;
+    this._listenHandler(ws);
+    return ws;
   }
 
   /**
@@ -69,7 +93,12 @@ module.exports = class SC extends EventEmitter {
    */
   _listenHandler (ws) {
     ws.on('open', () => {
+      /**
+       * @event SC#ready
+       * @type {string}
+       */
       this.emit('ready', ws.type);
+      if (ws.reconnectTries > 0) ws.reconnectTries = 0;
       if (ws.type === 'token') ws.send(JSON.stringify(this.watchedTokens));
     });
 
@@ -79,21 +108,61 @@ module.exports = class SC extends EventEmitter {
 
       data = JSON.parse(data);
       if (ws.type === 'token') this.tokens = data;
-      else if (ws.type === 'mapdata') this.data = data;
+      else if (ws.type === 'mapData') this.data = data;
       else this.live = data;
 
+      /**
+       * @event SC#data
+       *
+       * @type {object}
+       * @param {string} type WebSocket type
+       * @param {any} data Received data
+       */
       this.emit('data', {
         type: ws.type,
         data
       });
     });
 
-    ws.on('error', (error) => this.emit('error', { ws, error }));
-    ws.on('close', () => this.emit('disconnect', ws.type));
+    ws.on('error', (error) => {
+      /**
+       * @event SC#error
+       *
+       * @type {object}
+       * @param {WebSocket | string | null} ws WebSocket
+       * @param {Error | TypeError} error Error
+       */
+      if ((ws.reconnectTries === 0 && !error.message.includes('connect')) || ws.reconnectTries >= this.config.ws.maxTries) this.emit('error', { ws, error });
+    });
+    ws.on('close', () => {
+      /**
+       * @event SC#disconnect
+       * @type {string}
+       */
+      this.emit('disconnect', ws.type);
+      if (ws.reconnectTries >= this.config.ws.maxTries) {
+        return this.emit('error', {
+          ws,
+          error: new Error(`Failed to reconnect WebSocket after retrying ${this.config.ws.maxTries} times.`)
+        });
+      }
+
+      setTimeout(() => {
+        /**
+         * @event SC#reconnecting
+         * @type {string}
+         */
+        this.emit('reconnecting', ws.type);
+        ws.removeAllListeners();
+        this.ws[ws.type] = this._createWS(ws.url, ws.type, ws.reconnectTries + 1);
+      }, this.config.ws.reconnectInterval);
+    });
   }
 
   /**
    * Get JSON data of a map
+   * @method
+   * @returns {Promise<object, Error>}
    */
   getJson () {
     return new Promise((resolve, reject) => {
@@ -105,6 +174,8 @@ module.exports = class SC extends EventEmitter {
 
   /**
    * Get map background image data
+   * @method
+   * @returns {Promise<object, Error>}
    */
   getBackground () {
     return new Promise((resolve, reject) => {
@@ -116,6 +187,8 @@ module.exports = class SC extends EventEmitter {
 
   /**
    * Get web overlay list
+   * @method
+   * @returns {Promise<object, Error>}
    */
   getOverlayList () {
     return new Promise((resolve, reject) => {
@@ -127,6 +200,8 @@ module.exports = class SC extends EventEmitter {
 
   /**
    * Get SC settings
+   * @method
+   * @returns {Promise<object, Error>}
    */
   getSettings () {
     return new Promise((resolve, reject) => {
@@ -139,11 +214,25 @@ module.exports = class SC extends EventEmitter {
   /**
    * Get name value from live listener cache if exist.
    * Returns all cached live data if no name is given
+   * @method
    * @param {string=} name Live data key/name
-   * @returns string | Object | null
+   * @returns {?string|object} Live data value, entire live data cache or null
    */
   getLiveData (name) {
-    if (!this.config.listeners.liveData) throw new Error('Live data listener is not active!');
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+    if (!this.config.listeners.liveData) {
+      this.emit('error', {
+        ws: 'liveData',
+        error: new Error('Live data listener is not active!')
+      });
+      return;
+    }
     if (!name) return this.live;
     return this.live[name];
   }
@@ -151,11 +240,25 @@ module.exports = class SC extends EventEmitter {
   /**
    * Get name value from map data listener cache if exist.
    * Returns all cached map data if no name is given
+   * @method
    * @param {string=} name Map data key/name
-   * @returns string | Object | null
+   * @returns {?string|object} Data value, entire data cache or null
    */
   getData (name) {
-    if (!this.config.listeners.mapData) throw new Error('Map data listener is not active!');
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+    if (!this.config.listeners.mapData) {
+      this.emit('error', {
+        ws: 'mapData',
+        error: new Error('Map data listener is not active!')
+      });
+      return;
+    }
     if (!name) return this.data;
     return this.data[name];
   }
@@ -163,11 +266,25 @@ module.exports = class SC extends EventEmitter {
   /**
    * Get name value from token listener cache if exist.
    * Returns all cached tokens if no name is given
-   * @param {string=} name Token key/name
-   * @returns string | Object | null
+   * @method
+   * @param {string=} token Token key/name
+   * @returns {?string|object} Token value, entire token cache or null
    */
   getToken (token) {
-    if (!this.config.listeners.tokens) throw new Error('Tokens listener is not active!');
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+    if (!this.config.listeners.tokens) {
+      this.emit('error', {
+        ws: 'token',
+        error: new Error('Tokens listener is not active!')
+      });
+      return;
+    }
     if (!token) return this.tokens;
     if (this.watchedTokens.indexOf(token) === -1) this.addToken(token);
     return this.tokens[token];
@@ -175,29 +292,76 @@ module.exports = class SC extends EventEmitter {
 
   /**
    * Add/register token to the listener
+   * @method
    * @param {string} token Token key/name
    */
   addToken (token) {
-    if (!this.config.listeners.tokens) throw new Error('Tokens listener is not active!');
-    if (!token || typeof token !== 'string') throw new TypeError('Token name is not string!');
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+
+    if (!this.config.listeners.tokens) {
+      this.emit('error', {
+        ws: 'token',
+        error: new Error('Tokens listener is not active!')
+      });
+      return;
+    }
+
+    if (!token || typeof token !== 'string') {
+      this.emit('error', {
+        ws: 'token',
+        error: new TypeError('Token name is not string!')
+      });
+      return;
+    }
     this.watchedTokens.push(token);
-    if (this.ws.readyState === 1) this.ws.tokenWs.send(JSON.stringify(this.watchedTokens));
+    if (this.ws.token.readyState === 1) this.ws.token.send(JSON.stringify(this.watchedTokens));
   }
 
   /**
    * Remove/unregister token from the listener
+   * @method
    * @param {string} token Token key/name
    */
   removeToken (token) {
-    if (!this.config.listeners.tokens) throw new Error('Tokens listener is not active!');
-    if (!token || typeof token !== 'string') throw new TypeError('Token name is not string!');
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+
+    if (!this.config.listeners.tokens) {
+      this.emit('error', {
+        ws: 'token',
+        error: new Error('Tokens listener is not active!')
+      });
+      return;
+    }
+
+    if (!token || typeof token !== 'string') {
+      this.emit('error', {
+        ws: 'token',
+        error: new TypeError('Token name is not string!')
+      });
+      return;
+    }
     const i = this.watchedTokens.indexOf(token);
     if (i === -1) return;
     this.watchedTokens.splice(i, 1);
-    if (this.ws.readyState === 1) this.ws.send(JSON.stringify(this.watchedTokens));
+    if (this.ws.token.readyState === 1) this.ws.token.send(JSON.stringify(this.watchedTokens));
   }
 
-  get osuStatus () {
+  /**
+   * @static
+   */
+  static get osuStatus () {
     return {
       Null: 0,
       Listening: 1,
@@ -208,7 +372,10 @@ module.exports = class SC extends EventEmitter {
     };
   }
 
-  get rawOsuStatus () {
+  /**
+   * @static
+   */
+  static get rawOsuStatus () {
     return {
       Unknown: -2,
       NotRunning: -1,
@@ -232,7 +399,10 @@ module.exports = class SC extends EventEmitter {
     };
   }
 
-  get osuGrade () {
+  /**
+   * @static
+   */
+  static get osuGrade () {
     return {
       0: 'SSH',
       1: 'SH',

@@ -19,35 +19,45 @@ If you can't connect to Stream Companion, go to `Settings/Web Overlay` and click
 
 ```js
 /* Import/Require the package */
+// ES6
 import StreamCompanion from 'streamcompanion';
 // CommonJS
 const StreamCompanion = require('streamcompanion');
 
-const options = {       // Default configuration
-  host: 'localhost',    // SC host
-  port: 20727,          // SC port
-  proto: 'http',        // SC protocol
-  watchTokens: [],      // Tokens to watch (optional if listeners.tokens is false)
+const options = {                 // Default configuration
+  host: 'localhost',              // SC host
+  port: 20727,                    // SC port
+  proto: 'http',                  // SC protocol
+  watchTokens: [],                // Tokens to watch (optional if listeners.tokens is false)
+  initializeAutomatically: true,  // Automatically create and connect to WebSockets
   listeners: {
-    tokens: true,       // Tokens listener/websocket
-    mapData: true,      // Map Data listener/websocket
-    liveData: false     // Live Data listener/websocket
+    tokens: true,                 // Tokens listener/websocket
+    mapData: true,                // Map Data listener/websocket
+    liveData: false               // Live Data listener/websocket
+  },
+  ws: {
+    reconnectInterval: 3000,      // Reconnect interval
+    maxTries: 5                   // Max tries to reconnect before throwing an error (Set to Infinity for no max tries)
   }
 };
 
 const SC = new StreamCompanion(options);
+// Initialize WebSocket (only if initializeAutomatically is false)
+// HTTP Methods (getBackground, getJson, etc.) is not affected by this/initialization
+SC.initialize();
 
 /* SC Events
  * ---------
  * ready (ws.type) Emitted on websocket is connected
  * data (ws, data) Emitted on websocket data is received
- * error (ws, error) Emitted on websocket error
+ * error (ws, error) Emitted on websocket/method error
  * disconnect (ws.type) Emitted on websocket disconnect
+ * reconnecting (ws.type) Emitted on websocket trying to reconnect
  */
 
 /* WebSocket/Listener types
  * ------------------------
- * tokens, mapdata, livedata
+ * tokens, mapData, liveData
  */
 
 SC.on('data', ({
