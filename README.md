@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>StreamCompanion (node-sc)</h1>
+  <img src="https://i.imgur.com/4KlCHc3.png" alt="logo"></img>
   <p>Node implementation of StreamCompanion using its built-in WebSocket endpoints.</p>
 
   <a href="https://github.com/Edqe14/node-sc/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Edqe14/node-sc?style=for-the-badge" alt="License"></img></a>
