@@ -1,0 +1,23 @@
+{
+  "name": "NodeSC",
+  "short_name": "NodeSC",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "images/icons/manifest-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "images/icons/manifest-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "theme_color": "#004368",
+  "background_color": "#fcfcfc",
+  "display": "fullscreen",
+  "orientation": "portrait"
+}
