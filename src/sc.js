@@ -169,7 +169,7 @@ class SC extends EventEmitter {
   /**
    * Get JSON data of a map
    * @method
-   * @returns {Promise<object, Error>}
+   * @returns {Promise<object>}
    */
   getJson () {
     return new Promise((resolve, reject) => {
@@ -182,7 +182,7 @@ class SC extends EventEmitter {
   /**
    * Get map background image data
    * @method
-   * @returns {Promise<object, Error>}
+   * @returns {Promise<object>}
    */
   getBackground () {
     return new Promise((resolve, reject) => {
@@ -195,7 +195,7 @@ class SC extends EventEmitter {
   /**
    * Get web overlay list
    * @method
-   * @returns {Promise<object, Error>}
+   * @returns {Promise<object>}
    */
   getOverlayList () {
     return new Promise((resolve, reject) => {
@@ -208,7 +208,7 @@ class SC extends EventEmitter {
   /**
    * Get SC settings
    * @method
-   * @returns {Promise<object, Error>}
+   * @returns {Promise<object>}
    */
   getSettings () {
     return new Promise((resolve, reject) => {
