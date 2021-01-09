@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>sc.js - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Classes</li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="SC.html">SC</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#addToken">addToken</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#getBackground">getBackground</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#getData">getData</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#getJson">getJson</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#getLiveData">getLiveData</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#getOverlayList">getOverlayList</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#getSettings">getSettings</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#getToken">getToken</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#initialize">initialize</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="SC.html#removeToken">removeToken</a></span></li><li class="nav-heading">Events</li><li class="nav-heading"><span class="nav-item-type type-event">E</span><span class="nav-item-name"><a href="SC.html#event:data">data</a></span></li><li class="nav-heading"><span class="nav-item-type type-event">E</span><span class="nav-item-name"><a href="SC.html#event:disconnect">disconnect</a></span></li><li class="nav-heading"><span class="nav-item-type type-event">E</span><span class="nav-item-name"><a href="SC.html#event:error">error</a></span></li><li class="nav-heading"><span class="nav-item-type type-event">E</span><span class="nav-item-name"><a href="SC.html#event:ready">ready</a></span></li><li class="nav-heading"><span class="nav-item-type type-event">E</span><span class="nav-item-name"><a href="SC.html#event:reconnecting">reconnecting</a></span></li>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">sc.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>const WebSocket = require('ws');
+const { get } = require('axios');
+const { EventEmitter } = require('events');
+
+class SC extends EventEmitter {
+  /**
+   * StreamCompanion constructor
+   * @param {Object} config
+   * @param {string} config.host SC Host address
+   * @param {Number} config.port SC Port number
+   * @param {'http'|'https'} config.proto SC HTTP protocol. This will also change the websocket protocol to `wss` if `https` is used here
+   * @param {string[]} config.watchTokens Default tokens to watch/get
+   * @param {boolean} [config.initializeAutomatically=true] Automatically create and connect to WebSockets
+   * @param {Object} config.listeners
+   * @param {boolean} [config.listeners.tokens=true] Toggle token websocket
+   * @param {boolean} [config.listeners.mapData=true] Toggle map data websocket
+   * @param {boolean} [config.listeners.liveData=false] Toggle live data websocket
+   * @param {Object} config.ws
+   * @param {Number} config.ws.reconnectInterval Reconnect interval
+   * @param {Number} config.ws.maxTries Max tries to reconnect before emitting an error
+   */
+  constructor (config) {
+    super();
+    this.config = Object.assign({
+      host: 'localhost',
+      port: 20727,
+      proto: 'http',
+      watchTokens: [],
+      initializeAutomatically: true,
+      listeners: {
+        tokens: true,
+        mapData: true,
+        liveData: false
+      },
+      ws: {
+        reconnectInterval: 3000,
+        maxTries: 5
+      }
+    }, config);
+
+    this.url = `${this.config.proto}://${this.config.host}:${this.config.port}`;
+    this.wsUrl = `${this.config.proto === 'http' ? 'ws' : 'wss'}://${this.config.host}:${this.config.port}`;
+    this.ws = {};
+    this.initialized = false;
+    if (this.config.initializeAutomatically) this.initialize();
+  }
+
+  /**
+   * Initialize/Start creating WebSocket clients  
+   * You need to run this if `config.initializeAutomatically` is false
+   * @method
+   */
+  initialize () {
+    this.initialized = true;
+    if (this.config.listeners.tokens) {
+      this.tokens = {};
+      this.watchedTokens = this.config.watchTokens;
+      if (this.ws.token instanceof WebSocket) this.ws.token.removeAllListeners();
+      this.ws.token = this._createWS(`${this.wsUrl}/tokens`, 'token');
+    }
+
+    if (this.config.listeners.mapData) {
+      this.data = {};
+      if (this.ws.mapData instanceof WebSocket) this.ws.mapData.removeAllListeners();
+      this.ws.mapData = this._createWS(`${this.wsUrl}/mapData`, 'mapData');
+    }
+
+    if (this.config.listeners.liveData) {
+      this.live = {};
+      if (this.ws.liveData instanceof WebSocket) this.ws.liveData.removeAllListeners();
+      this.ws.liveData = this._createWS(`${this.wsUrl}/liveData`, 'liveData');
+    }
+  }
+
+  /**
+   * Create new WebSocket client
+   * @private
+   * @param {string} url WebSocket URI
+   * @param {string} type WebSocket Type
+   * @param {number=} reconnectTries Reconnect tries count
+   */
+  _createWS (url, type, reconnectTries = 0) {
+    const ws = new WebSocket(url);
+    ws.type = type;
+    ws.reconnectTries = reconnectTries;
+    this._listenHandler(ws);
+    return ws;
+  }
+
+  /**
+   * WebSocket listener handler
+   * @private
+   * @param {WebSocket} ws
+   */
+  _listenHandler (ws) {
+    ws.on('open', () => {
+      /**
+       * Emitted when a websocket is open
+       * @event SC#ready
+       *
+       * @type {string}
+       */
+      this.emit('ready', ws.type);
+      if (ws.reconnectTries > 0) ws.reconnectTries = 0;
+      if (ws.type === 'token') ws.send(JSON.stringify(this.watchedTokens));
+    });
+
+    ws.on('message', (data) => {
+      data = data.trim();
+      if (data.length === 0) return;
+
+      data = JSON.parse(data);
+      if (ws.type === 'token') this.tokens = data;
+      else if (ws.type === 'mapData') this.data = data;
+      else this.live = data;
+
+      /**
+       * Emitted when data is received from any of the enabled websockets
+       * @event SC#data
+       *
+       * @type {object}
+       * @param {string} type WebSocket type
+       * @param {any} data Received data
+       */
+      this.emit('data', {
+        type: ws.type,
+        data
+      });
+    });
+
+    ws.on('error', (error) => {
+      /**
+       * Emitted when an expected or unexpected error has occured
+       * @event SC#error
+       *
+       * @type {object}
+       * @param {WebSocket | string | null} ws WebSocket
+       * @param {Error | TypeError} error Error
+       */
+      if ((ws.reconnectTries === 0 &amp;&amp; !error.message.includes('connect')) || ws.reconnectTries >= this.config.ws.maxTries) this.emit('error', { ws, error });
+    });
+    ws.on('close', () => {
+      /**
+       * Emitted when a websocket is disconnected from StreamCompanion
+       * @event SC#disconnect
+       *
+       * @type {string}
+       */
+      this.emit('disconnect', ws.type);
+      if (ws.reconnectTries >= this.config.ws.maxTries) {
+        return this.emit('error', {
+          ws,
+          error: new Error(`Failed to reconnect WebSocket after retrying ${this.config.ws.maxTries} times.`)
+        });
+      }
+
+      setTimeout(() => {
+        /**
+         * @event SC#reconnecting
+         * @type {string}
+         */
+        this.emit('reconnecting', ws.type);
+        ws.removeAllListeners();
+        this.ws[ws.type] = this._createWS(ws.url, ws.type, ws.reconnectTries + 1);
+      }, this.config.ws.reconnectInterval);
+    });
+  }
+
+  /**
+   * Get JSON data of a map
+   * @method
+   * @returns {Promise&lt;object, Error>}
+   */
+  getJson () {
+    return new Promise((resolve, reject) => {
+      get(`${this.url}/json`)
+        .then(res => resolve(res.data))
+        .catch(err => reject(err));
+    });
+  }
+
+  /**
+   * Get map background image data
+   * @method
+   * @returns {Promise&lt;object, Error>}
+   */
+  getBackground () {
+    return new Promise((resolve, reject) => {
+      get(`${this.url}/backgroundImage`)
+        .then(res => resolve(res.data))
+        .catch(err => reject(err));
+    });
+  }
+
+  /**
+   * Get web overlay list
+   * @method
+   * @returns {Promise&lt;object, Error>}
+   */
+  getOverlayList () {
+    return new Promise((resolve, reject) => {
+      get(`${this.url}/overlayList`)
+        .then(res => resolve(res.data))
+        .catch(err => reject(err));
+    });
+  }
+
+  /**
+   * Get SC settings
+   * @method
+   * @returns {Promise&lt;object, Error>}
+   */
+  getSettings () {
+    return new Promise((resolve, reject) => {
+      get(`${this.url}/settings`)
+        .then(res => resolve(res.data))
+        .catch(err => reject(err));
+    });
+  }
+
+  /**
+   * Get name value from live listener cache if exist.
+   * Returns all cached live data if no name is given
+   * @method
+   * @param {string=} name Live data key/name
+   * @returns {?string|object} Live data value `string`, entire live data cache `object` or `null` if the live data name doesn't exist
+   */
+  getLiveData (name) {
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+    if (!this.config.listeners.liveData) {
+      this.emit('error', {
+        ws: 'liveData',
+        error: new Error('Live data listener is not active!')
+      });
+      return;
+    }
+    if (!name) return this.live;
+    return this.live[name];
+  }
+
+  /**
+   * Get name value from map data listener cache if exist.
+   * Returns all cached map data if no name is given
+   * @method
+   * @param {string=} name Map data key/name
+   * @returns {?string|object} Data value `string`, entire data cache `object` or `null` if the data name doesn't exist
+   */
+  getData (name) {
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+    if (!this.config.listeners.mapData) {
+      this.emit('error', {
+        ws: 'mapData',
+        error: new Error('Map data listener is not active!')
+      });
+      return;
+    }
+    if (!name) return this.data;
+    return this.data[name];
+  }
+
+  /**
+   * Get name value from token listener cache if exist.
+   * Returns all cached tokens if no name is given
+   * @method
+   * @param {string=} token Token key/name
+   * @returns {?string|object} Token value `string`, entire token cache `object` or `null` if the token doesn't exist
+   */
+  getToken (token) {
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+    if (!this.config.listeners.tokens) {
+      this.emit('error', {
+        ws: 'token',
+        error: new Error('Tokens listener is not active!')
+      });
+      return;
+    }
+    if (!token) return this.tokens;
+    if (this.watchedTokens.indexOf(token) === -1) this.addToken(token);
+    return this.tokens[token];
+  }
+
+  /**
+   * Add/register token to the listener
+   * @method
+   * @param {string} token Token key/name
+   */
+  addToken (token) {
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+
+    if (!this.config.listeners.tokens) {
+      this.emit('error', {
+        ws: 'token',
+        error: new Error('Tokens listener is not active!')
+      });
+      return;
+    }
+
+    if (!token || typeof token !== 'string') {
+      this.emit('error', {
+        ws: 'token',
+        error: new TypeError('Token name is not string!')
+      });
+      return;
+    }
+    this.watchedTokens.push(token);
+    if (this.ws.token.readyState === 1) this.ws.token.send(JSON.stringify(this.watchedTokens));
+  }
+
+  /**
+   * Remove/unregister token from the listener
+   * @method
+   * @param {string} token Token key/name
+   */
+  removeToken (token) {
+    if (!this.initialized) {
+      this.emit('error', {
+        ws: null,
+        error: new Error('Not initialized')
+      });
+      return;
+    }
+
+    if (!this.config.listeners.tokens) {
+      this.emit('error', {
+        ws: 'token',
+        error: new Error('Tokens listener is not active!')
+      });
+      return;
+    }
+
+    if (!token || typeof token !== 'string') {
+      this.emit('error', {
+        ws: 'token',
+        error: new TypeError('Token name is not string!')
+      });
+      return;
+    }
+    const i = this.watchedTokens.indexOf(token);
+    if (i === -1) return;
+    this.watchedTokens.splice(i, 1);
+    if (this.ws.token.readyState === 1) this.ws.token.send(JSON.stringify(this.watchedTokens));
+  }
+
+  /**
+   * @static
+   */
+  static get osuStatus () {
+    return {
+      Null: 0,
+      Listening: 1,
+      Playing: 2,
+      Watching: 8,
+      Editing: 16,
+      ResultsScreen: 32
+    };
+  }
+
+  /**
+   * @static
+   */
+  static get rawOsuStatus () {
+    return {
+      Unknown: -2,
+      NotRunning: -1,
+      MainMenu: 0,
+      EditingMap: 1,
+      Playing: 2,
+      GameShutdownAnimation: 3,
+      SongSelectEdit: 4,
+      SongSelect: 5,
+      ResultsScreen: 7,
+      GameStartupAnimation: 10,
+      MultiplayerRooms: 11,
+      MultiplayerRoom: 12,
+      MultiplayerSongSelect: 13,
+      MultiplayerResultsscreen: 14,
+      OsuDirect: 15,
+      RankingTagCoop: 17,
+      RankingTeam: 18,
+      ProcessingBeatmaps: 19,
+      Tourney: 22
+    };
+  }
+
+  /**
+   * @static
+   */
+  static get osuGrade () {
+    return {
+      0: 'SSH',
+      1: 'SH',
+      2: 'SS',
+      3: 'S',
+      4: 'A',
+      5: 'B',
+      6: 'C',
+      7: 'D',
+      8: 'F',
+      9: ''
+    };
+  }
+}
+
+module.exports = SC;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Sat Jan 09 2021 21:15:49 GMT+0700 (Indochina Time) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
