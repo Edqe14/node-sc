@@ -4,7 +4,8 @@
   "description": "Node implementation of StreamCompanion using its built-in WebSocket endpoints.",
   "main": "src/sc.js",
   "scripts": {
-    "test": "node test/index.js"
+    "test": "node test/index.js",
+    "generate-docs": "node_modules/.bin/jsdoc --configure jsdoc.json --verbose"
   },
   "repository": {
     "type": "git",
@@ -22,7 +23,11 @@
   },
   "homepage": "https://github.com/Edqe14/node-sc#readme",
   "dependencies": {
-    "axios": "^0.21.0",
+    "axios": "^0.21.1",
     "ws": "^7.4.1"
+  },
+  "devDependencies": {
+    "jsdoc": "^3.6.6",
+    "minami": "^1.2.3"
   }
 }
