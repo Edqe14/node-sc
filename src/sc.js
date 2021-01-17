@@ -119,8 +119,8 @@ class SC extends EventEmitter {
        * @event SC#data
        *
        * @type {object}
-       * @param {string} type WebSocket type
-       * @param {any} data Received data
+       * @property {string} type WebSocket type
+       * @property {any} data Received data
        */
       this.emit('data', {
         type: ws.type,
@@ -134,8 +134,8 @@ class SC extends EventEmitter {
        * @event SC#error
        *
        * @type {object}
-       * @param {WebSocket | string | null} ws WebSocket
-       * @param {Error | TypeError} error Error
+       * @property {WebSocket | string | null} ws WebSocket
+       * @property {Error | TypeError} error Error
        */
       if ((ws.reconnectTries === 0 && !error.message.includes('connect')) || ws.reconnectTries >= this.config.ws.maxTries) this.emit('error', { ws, error });
     });
@@ -308,7 +308,7 @@ class SC extends EventEmitter {
         ws: null,
         error: new Error('Not initialized')
       });
-      return;
+      return false;
     }
 
     if (!this.config.listeners.tokens) {
@@ -316,7 +316,7 @@ class SC extends EventEmitter {
         ws: 'token',
         error: new Error('Tokens listener is not active!')
       });
-      return;
+      return false;
     }
 
     if (!token || typeof token !== 'string') {
@@ -324,10 +324,16 @@ class SC extends EventEmitter {
         ws: 'token',
         error: new TypeError('Token name is not string!')
       });
-      return;
+      return false;
     }
+
+    if (this.watchedTokens.includes(token)) return false;
     this.watchedTokens.push(token);
-    if (this.ws.token.readyState === 1) this.ws.token.send(JSON.stringify(this.watchedTokens));
+    if (this.ws.token.readyState === 1) {
+      this.ws.token.send(JSON.stringify(this.watchedTokens));
+      return true;
+    }
+    return false;
   }
 
   /**
@@ -341,7 +347,7 @@ class SC extends EventEmitter {
         ws: null,
         error: new Error('Not initialized')
       });
-      return;
+      return false;
     }
 
     if (!this.config.listeners.tokens) {
@@ -349,7 +355,7 @@ class SC extends EventEmitter {
         ws: 'token',
         error: new Error('Tokens listener is not active!')
       });
-      return;
+      return false;
     }
 
     if (!token || typeof token !== 'string') {
@@ -357,12 +363,16 @@ class SC extends EventEmitter {
         ws: 'token',
         error: new TypeError('Token name is not string!')
       });
-      return;
+      return false;
     }
     const i = this.watchedTokens.indexOf(token);
-    if (i === -1) return;
+    if (i === -1) return false;
     this.watchedTokens.splice(i, 1);
-    if (this.ws.token.readyState === 1) this.ws.token.send(JSON.stringify(this.watchedTokens));
+    if (this.ws.token.readyState === 1) {
+      this.ws.token.send(JSON.stringify(this.watchedTokens));
+      return true;
+    }
+    return false;
   }
 
   /**

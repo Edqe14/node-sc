@@ -4,7 +4,7 @@
   "description": "Node implementation of StreamCompanion using its built-in WebSocket endpoints.",
   "main": "src/sc.js",
   "scripts": {
-    "test": "node test/index.js",
+    "test": "jest --forceExit",
     "generate-docs": "node_modules/.bin/jsdoc --configure jsdoc.json --verbose"
   },
   "repository": {
@@ -27,7 +27,9 @@
     "ws": "^7.4.1"
   },
   "devDependencies": {
+    "jest": "^26.6.3",
     "jsdoc": "^3.6.6",
-    "minami": "^1.2.3"
+    "minami": "^1.2.3",
+    "ps-node": "^0.1.6"
   }
 }
