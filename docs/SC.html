@@ -3,15 +3,16 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="theme-color" content="#004368">
     <title>SC - Documentation</title>
 
     <link rel="apple-touch-icon" href="images/icons/apple-icon-180.png">
     <link rel="shortcut icon" href="images/node-sc.ico" type="image/x-icon">
     <link rel="manifest" href="manifest.json">
 
-    <meta name="author" content="Edqe_">
+    <meta name="theme-color" content="#004368">
     <meta name="description" content="Node implementation of StreamCompanion using its built-in WebSocket endpoints.">
+    <meta name="author" content="Edqe_">
+
     <meta name="og:type" content="website">
     <meta name="og:title" content="NodeSC">
     <meta name="og:site_name" content="node-sc">
@@ -20,9 +21,9 @@
     <meta name="og:url" content="https://node-sc.now.sh/">
 
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js');
+    }
     </script>
     <script src="scripts/prettify/prettify.js"></script>
     <script src="scripts/prettify/lang-css.js"></script>
@@ -795,7 +796,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line412">line 412</a>
+        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line424">line 424</a>
     </li></ul></dd>
     
 
@@ -855,7 +856,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line371">line 371</a>
+        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line383">line 383</a>
     </li></ul></dd>
     
 
@@ -915,7 +916,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line385">line 385</a>
+        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line397">line 397</a>
     </li></ul></dd>
     
 
@@ -946,7 +947,7 @@
 
     
 
-    <h4 class="name" id="addToken"><span class="type-signature"></span>addToken<span class="signature">(token)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="addToken"><span class="type-signature"></span>addToken<span class="signature">(token)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
 
     
 
@@ -989,7 +990,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line305">line 305</a>
+        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line306">line 306</a>
     </li></ul></dd>
     
 
@@ -1071,6 +1072,27 @@
 
 
 
+
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+<dl class="param-type">
+    <dt>
+        Type:
+    </dt>
+    <dd>
+        
+<span class="param-type"><code>Boolean</code></span>
+
+
+    </dd>
+</dl>
+
+
+    
+</div>
 
 
 
@@ -2109,7 +2131,7 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
 
     
 
-    <h4 class="name" id="removeToken"><span class="type-signature"></span>removeToken<span class="signature">(token)</span><span class="type-signature"></span></h4>
+    <h4 class="name" id="removeToken"><span class="type-signature"></span>removeToken<span class="signature">(token)</span><span class="type-signature"> &rarr; {Boolean}</span></h4>
 
     
 
@@ -2152,7 +2174,7 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line338">line 338</a>
+        <a href="sc.js.html">sc.js</a>, <a href="sc.js.html#line346">line 346</a>
     </li></ul></dd>
     
 
@@ -2235,6 +2257,27 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
 
 
 
+<div class="section-returns">
+<h5>Returns:</h5>
+
+        
+
+<dl class="param-type">
+    <dt>
+        Type:
+    </dt>
+    <dd>
+        
+<span class="param-type"><code>Boolean</code></span>
+
+
+    </dd>
+</dl>
+
+
+    
+</div>
+
 
 
 </div>
@@ -2262,6 +2305,85 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
     <p>Emitted when data is received from any of the enabled websockets</p>
 </div>
 
+
+
+
+
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>type</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>string</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>WebSocket type</p></td>
+        </tr>
+
+        
+
+    
+
+        <tr>
+            
+                <td class="name"><code>data</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>any</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Received data</p></td>
+        </tr>
+
+        
+
+    
+    </tbody>
+</table>
 
 
 
@@ -2324,84 +2446,6 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>type</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><code>string</code></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>WebSocket type</p>
-                
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>data</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><code>any</code></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>Received data</p>
-                
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -2534,6 +2578,94 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
 
 
 
+    <h5 class="subsection-title">Properties:</h5>
+
+    
+
+<table class="props">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>ws</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>WebSocket</code></span>
+|
+
+<span class="param-type"><code>string</code></span>
+|
+
+<span class="param-type"><code>null</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>WebSocket</p></td>
+        </tr>
+
+        
+
+    
+
+        <tr>
+            
+                <td class="name"><code>error</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><code>Error</code></span>
+|
+
+<span class="param-type"><code>TypeError</code></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Error</p></td>
+        </tr>
+
+        
+
+    
+    </tbody>
+</table>
+
+
+
+
 <dl class="details">
 
     
@@ -2592,93 +2724,6 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
 
 
 
-
-
-    <h5>Parameters:</h5>
-    
-
-<table class="params">
-    <thead>
-    <tr>
-        
-        <th>Name</th>
-        
-
-        <th>Type</th>
-
-        
-
-        
-
-        <th class="last">Description</th>
-    </tr>
-    </thead>
-
-    <tbody>
-    
-
-        <tr>
-            
-                <td class="name"><code>ws</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><code>WebSocket</code></span>
-|
-
-<span class="param-type"><code>string</code></span>
-|
-
-<span class="param-type"><code>null</code></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>WebSocket</p>
-                
-            </td>
-        </tr>
-
-    
-
-        <tr>
-            
-                <td class="name"><code>error</code></td>
-            
-
-            <td class="type">
-            
-                
-<span class="param-type"><code>Error</code></span>
-|
-
-<span class="param-type"><code>TypeError</code></span>
-
-
-            
-            </td>
-
-            
-
-            
-
-            <td class="description last">
-                <p>Error</p>
-                
-            </td>
-        </tr>
-
-    
-    </tbody>
-</table>
 
 
 
@@ -2896,7 +2941,7 @@ You need to run this if <code>config.initializeAutomatically</code> is false</p>
 <br class="clear">
 
 <footer>
-    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Sat Jan 09 2021 21:19:03 GMT+0700 (Indochina Time) using the Minami theme.
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Sun Jan 17 2021 22:18:42 GMT+0700 (Indochina Time) using the Minami theme.
 </footer>
 
 <script>prettyPrint();</script>
