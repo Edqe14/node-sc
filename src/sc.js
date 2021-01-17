@@ -301,6 +301,7 @@ class SC extends EventEmitter {
    * Add/register token to the listener
    * @method
    * @param {string} token Token key/name
+   * @returns {Boolean}
    */
   addToken (token) {
     if (!this.initialized) {
@@ -340,6 +341,7 @@ class SC extends EventEmitter {
    * Remove/unregister token from the listener
    * @method
    * @param {string} token Token key/name
+   * @returns {Boolean}
    */
   removeToken (token) {
     if (!this.initialized) {
